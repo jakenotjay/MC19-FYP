@@ -16,11 +16,6 @@ nSlices = img.shape[0]
 areaList = []
 componentCountArray = np.zeros(nSlices)
 
-# TODO take code and loop over all slices
-# generate area stats per each fibre,
-# shouldn't need a 3d Array
-# then just do histogram of stats
-
 for slice in range(nSlices):
     # get slice and find number of individual fibres and an array of where each component is
     sliceImage = img[slice]
@@ -42,7 +37,7 @@ for slice in range(nSlices):
 
 # concatenate array list into single array and then flatten to 1D
 areaArray = np.concatenate(areaList).flatten()
-print('areaArray shape, should be same as nComponents', areaArray.shape)
+# print('areaArray shape, should be same as nComponents', areaArray.shape)
 print('values range between ', np.amin(areaArray), 'um^2 and ', np.amax(areaArray), ' um^2')
 print('this corresponds to ', np.amin(areaArray)/(1.4**2), ' pixels and ', np.amax(areaArray)/(1.4**2), ' pixels')
 print('sum of nComponents (no. fibres)', np.sum(componentCountArray))
