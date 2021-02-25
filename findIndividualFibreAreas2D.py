@@ -46,7 +46,16 @@ print('areaArray shape, should be same as nComponents', areaArray.shape)
 print('values range between ', np.amin(areaArray), 'um^2 and ', np.amax(areaArray), ' um^2')
 print('this corresponds to ', np.amin(areaArray)/(1.4**2), ' pixels and ', np.amax(areaArray)/(1.4**2), ' pixels')
 print('sum of nComponents (no. fibres)', np.sum(componentCountArray))
-fig = make_subplots(rows=2, cols=1)
+
+# assuming gaussian (probably not true, but just quick try at limiting results)
+def rejectOutliers(data, m=2):
+    return data[abs(data - np.mean(data)) < m * np.std(data)]
+
+# massive outliers even if we limit to "68%" confidence interval
+filteredArray = rejectOutliers(areaArray, 1)
+print("rejected ", areaArray.shape[0] - filteredArray.shape[0], " values")
+
+fig = make_subplots(rows=3, cols=1)
 
 fig.add_traces(
     go.Histogram(
@@ -62,6 +71,14 @@ fig.add_traces(
         name='No. Fibres in a slice'
     ),
     rows=2, cols=1
+)
+
+fig.add_traces(
+    go.Histogram(
+        x=filteredArray,
+        name='Filtered Fibre Area um^2'
+    ),
+    rows=3, cols=1
 )
 
 fig.show()
