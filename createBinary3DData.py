@@ -6,7 +6,8 @@ import cv2  # computer vision
 from skimage import io  # scikit-image
 
 # load image as pixel array
-imageFilename = './../dissertation/resources/For_Richard_New/cropped-1_4umperpixel.tif'
+# CHANGE THIS BEFORE RUNNING
+imageFilename = './../dissertation/resources/data/bigFused-2/bigFused-2.tif'
 
 imageStack = io.imread(imageFilename)
 print(imageStack.shape[0], ' slices in z stack each ',
@@ -17,11 +18,11 @@ newImageStack = np.zeros(shape = (imageStack.shape[0], imageStack.shape[1], imag
 print(newImageStack.shape)
 
 # pixel size in micrometres
-pixelSize = 1.4
+# CHANGE THIS BEFORE RUNNING
+pixelSize = 0.28
 print('each pixel ', pixelSize, ' micrometres a side')
 
-# TODO Loop over all 184 slices and create 3D binary array
-# up to 184 images
+# looping over every slice in z axis
 for imageNo in range(imageStack.shape[0]):
     print('read in image number ', imageNo, ' from tiff stack')
     print(imageStack[imageNo].shape)
@@ -59,7 +60,6 @@ for imageNo in range(imageStack.shape[0]):
         if len(pts[0]) < minFibreSize:
             labels[pts] = 0
             numFibres = numFibres-1
-            print('removing tiny possible fibre of ', len(pts[0]), ' pixels')
         else:
             #        print('keeping fibre')
             labels[pts] = 1
@@ -84,5 +84,6 @@ for imageNo in range(imageStack.shape[0]):
     print(counter, ' fibre pixels')
     newImageStack[imageNo] = labels
 
-filename = '3DImageStackBinary'
+# CHANGE THIS BEFORE RUNNING
+filename = '3DImageStackBinaryIoatzinData'
 np.save(filename, newImageStack)

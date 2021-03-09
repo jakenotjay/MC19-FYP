@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
 import pandas as pd
 
 # load image as pixel array
