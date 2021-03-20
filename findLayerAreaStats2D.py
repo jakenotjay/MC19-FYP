@@ -5,10 +5,10 @@ import plotly.graph_objects as go
 import pandas as pd
 
 # load image as pixel array
-image = np.load('./3DImageStackBinary.npy')
+image = np.load('./ImageStackFULL.npz')['binaryOut']
 
 # pixel size in micrometres
-pixelSize = 1.4
+pixelSize = 0.28
 print('Each pixel has side length', pixelSize, ' micrometres a side')
 
 # generate stats function
@@ -17,22 +17,28 @@ def genStats(imageSlice):
 
     retVal, labels = cv2.connectedComponents(imageSlice)
 
+    fracFibres = 0
+    meanFibreArea = 0
+    meanFibreDiameter = 0
+    estChannelWidth = 0
+
     numFibres = retVal - 1
-    numFibrePixels = 0
-    flatArray = imageSlice.flatten()
+    if(numFibres > 0):
+        numFibrePixels = 0
+        flatArray = imageSlice.flatten()
 
-    for i in range(1, retVal):
-        pts = np.where(labels == i)
-        labels[pts] = 1
-        numFibrePixels = numFibrePixels + len(pts[0])
+        for i in range(1, retVal):
+            pts = np.where(labels == i)
+            labels[pts] = 1
+            numFibrePixels = numFibrePixels + len(pts[0])
 
-    fracFibres = numFibrePixels / len(flatArray)
+        fracFibres = numFibrePixels / len(flatArray)
 
-    meanFibreArea = (numFibrePixels / numFibres) * pixelSize **2
+        meanFibreArea = (numFibrePixels / numFibres) * pixelSize **2
 
-    meanFibreDiameter = np.sqrt(meanFibreArea)
+        meanFibreDiameter = np.sqrt(meanFibreArea)
 
-    estChannelWidth = meanFibreDiameter / np.sqrt(fracFibres)
+        estChannelWidth = meanFibreDiameter / np.sqrt(fracFibres)        
 
     return fracFibres, meanFibreArea, meanFibreDiameter, estChannelWidth
 
@@ -93,7 +99,6 @@ for imageNo in range(nSlicesY):
     meanFibreDiameterSlicesY[imageNo] = meanFibreDiameter
     estChannelWidthSlicesY[imageNo] = estChannelWidth
 
-# TODO : generate bins and number of items in each bin to plot inside histogram
 
 dataZ = {
     'FibreFraction': fracFibresSlicesZ, 
@@ -154,3 +159,11 @@ fig.add_traces(
 )
 
 fig.show()
+
+filenameX = './' + '2DXstatsFULLSTACK' + '.pkl'
+filenameY = './' + '2DYstatsFULLSTACK' + '.pkl'
+filenameZ = './' + '2DZstatsFULLSTACK' + '.pkl'
+
+dataFrameX.to_pickle(filenameX)
+dataFrameY.to_pickle(filenameY)
+dataFrameZ.to_pickle(filenameZ)

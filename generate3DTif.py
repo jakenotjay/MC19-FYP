@@ -3,6 +3,6 @@ import random
 import tifffile
 
 zipFile = np.load('./ImageStackTest.npz')
-output = zipFile['blurThresh']
+output = zipFile['labelledOut']
 
-tifffile.imwrite('ImageStackTestBlurThresh.tif', output)
+tifffile.imwrite('ImageStackTestFinal.tif', output)
