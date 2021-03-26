@@ -21,8 +21,8 @@ print(newImageStack.shape)
 
 # pixel size in micrometres
 # CHANGE THIS BEFORE RUNNING
-pixelSize = 0.28
-print('each pixel ', pixelSize, ' micrometres a side')
+# pixelSize = 0.28
+# print('each pixel ', pixelSize, ' micrometres a side')
 
 print('Max value in image is ', np.amax(imageStack))
 print('Min value in image is ', np.amin(imageStack))
@@ -46,7 +46,7 @@ for imageNo in range(blur.shape[0]):
     imageSlice = blur[imageNo]
 
     # use simple binary threshold to filter out noise
-    thresholdValue = 50
+    thresholdValue = 30
     N, outputVals = cv2.threshold(imageSlice, thresholdValue, 1, cv2.THRESH_BINARY)
     
     newImageStack[imageNo] = outputVals
@@ -55,8 +55,8 @@ for imageNo in range(blur.shape[0]):
 print('Saving files')
 pts = np.where(newImageStack == 1)
 newImageStack[pts] = 255
-tifffile.imwrite('ImageStackBlurredThreshFULL.tif', newImageStack)
-tifffile.imwrite('ImageStackOriginalFULL.tif', imageStack)
+tifffile.imwrite('BigFusedBlurredThresh30.tif', newImageStack)
+tifffile.imwrite('BigFusedOriginal30.tif', imageStack)
 
 # finding all connected components in 3D
 # only 4,8 (2D) and 26, 18, and 6 (3D) are allowed 
@@ -85,6 +85,6 @@ for i in range(1, N+1):
 
 print("There are now ", nFibres, " components")
 
-filename='ImageStackFULL.npz'
+filename='BigFusedThresh30.npz'
 np.savez_compressed(filename, original=imageStack, blurThresh=newImageStack, labelledOut=labelsOut, binaryOut=binaryOut)
 

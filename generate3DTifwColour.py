@@ -4,7 +4,8 @@ from scipy.ndimage.measurements import label
 import tifffile
 
 zipFile = np.load('./ImageStackFULL.npz')
-labelledOutputs = zipFile['labelledOut']
+labelledOutputs = zipFile['labelledOut'][235:, 0:1200]
+print(labelledOutputs.shape)
 
 maxN = np.amax(labelledOutputs)
 print(maxN)
@@ -40,4 +41,4 @@ for i in range(1, maxN+1):
         rgbOutputs[pos[0][j], pos[1][j], pos[2][j], 2] = colourList[i-1][2]
         
 
-tifffile.imwrite('ImageStackBinaryComponentsBigFusedRGBFULL.tif', rgbOutputs, photometric='rgb')
+tifffile.imwrite('ImageStackNOTFULLFORMEASUREMENTS.tif', rgbOutputs, photometric='rgb')
