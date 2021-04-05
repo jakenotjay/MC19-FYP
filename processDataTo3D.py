@@ -8,7 +8,7 @@ from scipy.ndimage import gaussian_filter
 
 # load image as pixel array
 # CHANGE THIS BEFORE RUNNING
-imageFilename = './../dissertation/resources/data/bigFused-2/bigFused-2.tif'
+imageFilename = './../dissertation/resources/data/Fused3103.tif'
 
 imageStack = io.imread(imageFilename)
 imageStack = imageStack
@@ -55,8 +55,8 @@ for imageNo in range(blur.shape[0]):
 print('Saving files')
 pts = np.where(newImageStack == 1)
 newImageStack[pts] = 255
-tifffile.imwrite('BigFusedBlurredThresh30.tif', newImageStack)
-tifffile.imwrite('BigFusedOriginal30.tif', imageStack)
+tifffile.imwrite('Fused3103Thresh30.tif', newImageStack)
+tifffile.imwrite('Fused3103Original30.tif', imageStack)
 
 # finding all connected components in 3D
 # only 4,8 (2D) and 26, 18, and 6 (3D) are allowed 
@@ -85,6 +85,5 @@ for i in range(1, N+1):
 
 print("There are now ", nFibres, " components")
 
-filename='BigFusedThresh30.npz'
+filename='Fused3103Thresh30.npz'
 np.savez_compressed(filename, original=imageStack, blurThresh=newImageStack, labelledOut=labelsOut, binaryOut=binaryOut)
-
