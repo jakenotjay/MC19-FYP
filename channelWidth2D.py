@@ -68,10 +68,11 @@ def generateLocalFlowSpeeds(sliceNumber):
 
     # 2d array of square distances
     distancesSqr = distances ** 2
-    averageDistanceSquared = np.mean(distances) ** 2
+    averageOfDistanceSquared = np.mean(distancesSqr)
 
-    u_vox = averageVelocity * (distancesSqr / averageDistanceSquared)
+    u_vox = averageVelocity * (distancesSqr / averageOfDistanceSquared)
     meanU = np.mean(u_vox)
+    print('average of u_vox is', meanU, 'input average velocity was', averageVelocity)
     stdU = np.std(u_vox)
 
     statsData = {
