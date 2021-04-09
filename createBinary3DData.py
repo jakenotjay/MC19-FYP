@@ -1,5 +1,5 @@
-# load and display an image with Matplotlib
-from matplotlib import image
+# used to process imagery into 3D data to plot
+# LEGACY - USE processDataTo3D.py
 from matplotlib import pyplot as plt
 import numpy as np
 import cv2  # computer vision

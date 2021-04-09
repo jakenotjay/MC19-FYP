@@ -1,3 +1,5 @@
+# calculates channel width estimates based on fibre distances
+# calculates local flow speed based on fibre distances
 import numpy as np
 import cv2
 import pandas as pd
@@ -32,8 +34,10 @@ statsArray = np.zeros([6, nSlices])
 # pixel size in micrometres
 pixelSize = 0.28
 
+# finds distance to nearest fibre and generates statistics
 def generateDistanceStats(slice, filterMin=True, filterMax=True):
     # for all zeros (air pixels) find nearest 1 pixel (fibres)
+    # https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#ga25c259e7e2fa2ac70de4606ea800f12f
     distances = cv2.distanceTransform(slice, cv2.DIST_L2, cv2.DIST_MASK_5)
     
     # get rid of fibres (0) and those that are impossibly large
@@ -55,6 +59,7 @@ def generateDistanceStats(slice, filterMin=True, filterMax=True):
 
     return flatDistances, distances, mean, meanSquared, std
 
+# finds local flow speeds based on fibre fraction
 def generateLocalFlowSpeeds(sliceNumber):
     slice = inverseImage[sliceNumber]
 
@@ -70,6 +75,7 @@ def generateLocalFlowSpeeds(sliceNumber):
     distancesSqr = distances ** 2
     averageOfDistanceSquared = np.mean(distancesSqr)
 
+    # calulates u_vox
     u_vox = averageVelocity * (distancesSqr / averageOfDistanceSquared)
     meanU = np.mean(u_vox)
     print('average of u_vox is', meanU, 'input average velocity was', averageVelocity)
@@ -87,7 +93,7 @@ def calcAvgVelocityInLayer(avgSpeed, fracFibre):
     denominator = 1 - fracFibre
     return avgSpeed/denominator
 
-# calculates fibre fraction
+# calculates fibre fraction - fraction of image made up of fibre pixels
 def calcFibreFrac(slice):
     flatSlice = slice.flatten()
     pts = np.where(slice == 0)  
@@ -95,7 +101,8 @@ def calcFibreFrac(slice):
     fracFibres = nFibrePixels/len(flatSlice)
     return fracFibres
 
-# looking at channel width at different slices
+# UNCOMMENT TO CALCULATE CHANNEL WIDTH AT EVERY SLICE AND PLOT
+# looking at channel width at every slice
 # for i in range(nSlices):
 #     print(i, 'of', nSlices-1)
 #     slice = inverseImage[i]
@@ -166,6 +173,8 @@ print('property, min, max, mean, std')
 print('u_vox300', np.min(stats300Data['u_vox']), np.max(stats300Data['u_vox']), np.mean(stats300Data['u_vox']), np.std(stats300Data['u_vox']))
 print('u_vox500', np.min(stats500Data['u_vox']), np.max(stats500Data['u_vox']), np.mean(stats500Data['u_vox']), np.std(stats500Data['u_vox']))
 
+
+# UNCOMMENT FOR HISTOGRAMS OF COMPARISON BETWEEN SLICE 300 and SLICE 500
 # figSliceComparison = go.Figure()
 # figSliceComparison.add_trace(go.Histogram(
 #                     x=stats300Data['distances'],
@@ -224,6 +233,7 @@ print('u_vox500', np.min(stats500Data['u_vox']), np.max(stats500Data['u_vox']), 
 
 # figSliceComparisonU.show()
 
+# function to plot scatter and heatmap comparisons - used to plot fibres and the local flow around those fibres
 def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, colorbarTitle):
     pos = np.where(slice == 1)
 
@@ -258,7 +268,3 @@ plotScatterHeatmapComparison(binaryOutputs[299], stats300Data['u_vox'], 'Fibres'
 plotScatterHeatmapComparison(binaryOutputs[299], stats300Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
 plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
 plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
-
-# filename = './' + 'channelWidth2D' + '.pkl'
-# channelWidthDF.to_pickle(filename)
-

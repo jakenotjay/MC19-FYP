@@ -1,3 +1,6 @@
+# calculates fibre sizes on a 2D scale going slice per slice
+# plots the results as a function of slice
+# improved in findLayerAreaStats2D.py
 import numpy as np
 import cv2
 from plotly.subplots import make_subplots

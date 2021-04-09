@@ -1,3 +1,4 @@
+# finds number of pixels in a fibre and finds volume of fibres
 import numpy as np
 import pandas as pd
 from plotly.subplots import make_subplots

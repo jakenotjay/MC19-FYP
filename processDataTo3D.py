@@ -1,4 +1,5 @@
 ## processDataTo3D
+# generates a npz file containing binary outputs, labelled outputs, original output and a blurred/Thresholded image from a 3D image tif
 import numpy as np
 import cv2  # computer vision
 from skimage import io  # scikit-image
@@ -29,6 +30,7 @@ labelsOut, N = cc3d.connected_components(imageStack, return_N=True, connectivity
 
 print("Before any processing there are ", N, " components")
 
+# gaussian blur to not lose any low intensity spots
 print(imageStack.shape)
 blur = gaussian_filter(imageStack, sigma=1)
 print(blur.shape)
@@ -62,6 +64,7 @@ binaryOut = np.zeros(shape = (imageStack.shape[0], imageStack.shape[1], imageSta
 print("initially found ", N, " components")
 print("Now filtering based on size")
 
+# filter out fibres below minimum fibre size - can take a very long time for a large image (~days of processing for a large image)
 minFibreSize = 25
 nFibres = 0
 # creates binary and labelled imagery if of correct size
@@ -80,5 +83,6 @@ for i in range(1, N+1):
 
 print("There are now ", nFibres, " components")
 
+# save image
 filename='./outputs/FinalFusedThresh30.npz'
 np.savez_compressed(filename, original=imageStack, blurThresh=newImageStack, labelledOut=labelsOut, binaryOut=binaryOut)

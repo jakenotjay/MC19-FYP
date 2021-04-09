@@ -1,3 +1,5 @@
+# reads some generated pickle files and generates graphs from them
+# LEGACY - probably not too helpful
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go

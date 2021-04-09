@@ -1,5 +1,5 @@
+# LEGACY code used to create a txt file to process
 from matplotlib import image, pyplot
-from matplotlib import pyplot
 from numpy import asarray, savetxt
 
 # load image as pixel array

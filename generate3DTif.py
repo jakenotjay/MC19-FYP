@@ -1,5 +1,5 @@
+# generates 3D tif with no colour
 import numpy as np
-import random
 import tifffile
 
 zipFile = np.load('./ImageStackTest.npz')

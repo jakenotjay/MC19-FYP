@@ -1,3 +1,4 @@
+# generates 2D stats about fibre areas as a function of depth (slice)
 import numpy as np
 import cv2
 from plotly.subplots import make_subplots
@@ -11,7 +12,7 @@ image = np.load('./ImageStackFULL.npz')['binaryOut']
 pixelSize = 0.28
 print('Each pixel has side length', pixelSize, ' micrometres a side')
 
-# generate stats function
+# generate 2d stats function
 def genStats(imageSlice):
     imageSlice = imageSlice.astype(np.uint8)
 
@@ -23,7 +24,9 @@ def genStats(imageSlice):
     estChannelWidth = 0
 
     numFibres = retVal - 1
+    # check if image is empty
     if(numFibres > 0):
+        # generates stats
         numFibrePixels = 0
         flatArray = imageSlice.flatten()
 

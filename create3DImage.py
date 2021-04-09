@@ -1,5 +1,8 @@
+# LEGACY - DO NOT USE
+# attempts to plot data as a 3D scatter in plotly
+# use generate3DTif.py and instead view in imageJ
 import numpy as np
-from mayavi import mlab
+import plotly.graph_objects as go
 
 
 # load image as pixel array

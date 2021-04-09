@@ -1,3 +1,4 @@
+# Proof of concept 3D connected components
 import cc3d
 import numpy as np
 import cv2

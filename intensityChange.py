@@ -1,7 +1,11 @@
+# intensityChange.py
+# measures change in mean intensity and the change in max 50000 pixels mean intensity with depth
+# used to check how inaccurate the measurement is as we get deeper due to lens/confocal microscopy difficulty
 import numpy as np
 from skimage import io
 import plotly.express as px
 
+# import image
 imageFilename = './resources/data/Fused3103.tif'
 imageStack = io.imread(imageFilename)
 
@@ -19,11 +23,15 @@ for i in range(imageStack.shape[0]):
     flatSlice = slice.flatten()
     print('flat slice length', len(flatSlice))
 
+    # filter for non-zero elements
     filteredFlatSlice = flatSlice[flatSlice > 0]
     print('filtered flat slice length', len(filteredFlatSlice))
 
+    # take mean
     sliceMeanPixelIntensity = np.mean(filteredFlatSlice)
 
+    # get top 50000 intensity pixels and find mean
+    # https://stackoverflow.com/a/23734295
     nMax = 50000 # number of max intensities to get
     sliceMaxIntensitiesIndices = np.argpartition(filteredFlatSlice, -nMax)[-nMax:]
     sliceMaxIntensitiesArray = filteredFlatSlice[sliceMaxIntensitiesIndices]
@@ -33,6 +41,7 @@ for i in range(imageStack.shape[0]):
     maxMeanIntensities.append(sliceMaxIntensitiesMean)
     sliceNumber.append(i+1)
 
+# create dataframe and plot
 statsDataFrame = {
     'meanIntensities': meanIntensities,
     'maxMeanIntensities': maxMeanIntensities,
