@@ -8,7 +8,7 @@ from scipy.ndimage import gaussian_filter
 
 # load image as pixel array
 # CHANGE THIS BEFORE RUNNING
-imageFilename = './../dissertation/resources/data/Fused3103.tif'
+imageFilename = './dissertation/resources/data/FinalFused.tif'
 
 imageStack = io.imread(imageFilename)
 imageStack = imageStack
@@ -18,11 +18,6 @@ print(imageStack.shape[0], ' slices in z stack each ',
 newImageStack = np.zeros(shape = (imageStack.shape[0], imageStack.shape[1], imageStack.shape[2]), dtype=np.uint8)
 
 print(newImageStack.shape)
-
-# pixel size in micrometres
-# CHANGE THIS BEFORE RUNNING
-# pixelSize = 0.28
-# print('each pixel ', pixelSize, ' micrometres a side')
 
 print('Max value in image is ', np.amax(imageStack))
 print('Min value in image is ', np.amin(imageStack))
@@ -52,11 +47,11 @@ for imageNo in range(blur.shape[0]):
     newImageStack[imageNo] = outputVals
 
 # saving blurred and thresholded for comparison to original, before starting analysis
-print('Saving files')
+# print('Saving files')
 pts = np.where(newImageStack == 1)
 newImageStack[pts] = 255
-tifffile.imwrite('Fused3103Thresh30.tif', newImageStack)
-tifffile.imwrite('Fused3103Original30.tif', imageStack)
+# tifffile.imwrite('Fused3103Thresh30.tif', newImageStack)
+# tifffile.imwrite('Fused3103Original30.tif', imageStack)
 
 # finding all connected components in 3D
 # only 4,8 (2D) and 26, 18, and 6 (3D) are allowed 
@@ -85,5 +80,5 @@ for i in range(1, N+1):
 
 print("There are now ", nFibres, " components")
 
-filename='Fused3103Thresh30.npz'
+filename='./outputs/FinalFusedThresh30.npz'
 np.savez_compressed(filename, original=imageStack, blurThresh=newImageStack, labelledOut=labelsOut, binaryOut=binaryOut)
