@@ -9,7 +9,7 @@ from scipy.ndimage import gaussian_filter
 
 # load image as pixel array
 # CHANGE THIS BEFORE RUNNING
-imageFilename = './dissertation/resources/data/FinalFused.tif'
+imageFilename = './resources/data/bigFused2.tif'
 
 imageStack = io.imread(imageFilename)
 imageStack = imageStack

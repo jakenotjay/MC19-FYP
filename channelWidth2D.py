@@ -2,6 +2,7 @@
 # calculates local flow speed based on fibre distances
 import numpy as np
 import cv2
+from numpy.core.fromnumeric import swapaxes
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -10,8 +11,19 @@ from plotly.subplots import make_subplots
 zipFile = np.load('./ImageStackFULL.npz')
 binaryOutputs = np.asarray(zipFile['binaryOut'], dtype='bool')
 
+print('The x axis is', binaryOutputs.shape[1], 'by', binaryOutputs.shape[2], 'on the y axis')
+print('if this is wrong change the variable areAxesFlipped to True')
+
+areAxesFlipped = True
+if(areAxesFlipped):
+    binaryOutputs = np.swapaxes(binaryOutputs, 1, 2)
+    print('binary outputs now has the x axis as', binaryOutputs.shape[1], 'by', binaryOutputs.shape[2], 'on the y axis')
+
 # inverse image i.e 1 to 0, 0 to 1
 inverseImage = np.array(np.invert(binaryOutputs), dtype='uint8')
+print('inverse image has shape', inverseImage.shape[0], inverseImage.shape[1], inverseImage.shape[2])
+
+
 nSlices = inverseImage.shape[0]
 
 # average flow speeds in cms-1, calculated assuming perfect face seal
@@ -35,10 +47,13 @@ statsArray = np.zeros([6, nSlices])
 pixelSize = 0.28
 
 # finds distance to nearest fibre and generates statistics
-def generateDistanceStats(slice, filterMin=True, filterMax=True):
+def generateDistanceStats(slice, cropXStart, cropXEnd, cropYStart, cropYEnd, filterMin=True, filterMax=True):
     # for all zeros (air pixels) find nearest 1 pixel (fibres)
     # https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#ga25c259e7e2fa2ac70de4606ea800f12f
     distances = cv2.distanceTransform(slice, cv2.DIST_L2, cv2.DIST_MASK_5)
+    print('finding distances in periodic shape with shape', distances.shape)
+    distances = distances[cropXStart:cropXEnd, cropYStart:cropYEnd]
+    print('now cropping to original size, with shape', distances.shape)
     
     # get rid of fibres (0) and those that are impossibly large
     if(filterMin):
@@ -62,8 +77,9 @@ def generateDistanceStats(slice, filterMin=True, filterMax=True):
 # finds local flow speeds based on fibre fraction
 def generateLocalFlowSpeeds(sliceNumber):
     slice = inverseImage[sliceNumber]
+    periodicSlice, cropXStart, cropXEnd, cropYStart, cropYEnd = generatePeriodicSlice(slice)
 
-    flatDistances, distances, mean, meanSquared, std = generateDistanceStats(slice, False, False)
+    flatDistances, distances, mean, meanSquared, std = generateDistanceStats(periodicSlice, cropXStart, cropXEnd, cropYStart, cropYEnd, False, False)
     # distances are in um so we need to convert to metres
     distances = distances * (10**-6)
     fibreFrac = calcFibreFrac(slice)
@@ -100,6 +116,87 @@ def calcFibreFrac(slice):
     nFibrePixels = len(pts[0])
     fracFibres = nFibrePixels/len(flatSlice)
     return fracFibres
+
+def generatePeriodicSlice(slice):
+    print('creating periodic slice')
+    print('original slice has shape', slice.shape)
+
+    # length of slice in x and y
+    xLength = slice.shape[0]
+    yLength = slice.shape[1]
+
+    # define new periodic slice which will be double in size in both axes
+    periodicSlice = np.zeros([2*xLength, 2*yLength], dtype='uint8')
+
+    # split into lengths of four equal quarters of slice
+    x1 = int(np.ceil(xLength/2))
+    x2 = int(np.floor(xLength/2) + x1)
+    y1 = int(np.ceil(yLength/2))
+    y2 = int(np.floor(yLength/2) + y1)
+
+    # define arrays which are the 4 quarters of the slice
+    # slices in python are like so 0:d_i translates to 0 <= n_i < d_i
+    bottomLeft = slice[0:x1, 0:y1]
+    bottomRight = slice[x1:x2, 0:y1]
+    topLeft = slice[0:x1, y1:y2]
+    topRight = slice[x1:x2, y1:y2]
+
+    # create coordinate set for a 4x4 grid made up of the four quarters
+    X1 = x2-x1
+    X2 = X1 + x1
+    X3 = X2 + (x2-x1)
+    X4 = X3 + x1
+    Y1 = y2-y1
+    Y2 = Y1 + y1
+    Y3 = Y2 + (y2-y1)
+    Y4 = Y3 + y1
+
+    # create periodic slice made up from the quarters
+
+    periodicSlice[0:X1, 0:Y1] = topRight
+    periodicSlice[X1:X2, 0:Y1] = topLeft
+    periodicSlice[X2:X3, 0:Y1] = topRight
+    periodicSlice[X3:X4, 0:Y1] = topLeft
+
+    periodicSlice[0:X1, Y1:Y2] = bottomRight
+    periodicSlice[X1:X2, Y1:Y2] = bottomLeft
+    periodicSlice[X2:X3, Y1:Y2] = bottomRight
+    periodicSlice[X3:X4, Y1:Y2] = bottomLeft
+
+    periodicSlice[0:X1, Y2:Y3] = topRight
+    periodicSlice[X1:X2, Y2:Y3] = topLeft
+    periodicSlice[X2:X3, Y2:Y3] = topRight
+    periodicSlice[X3:X4, Y2:Y3] = topLeft
+
+    periodicSlice[0:X1, Y3:Y4] = bottomRight
+    periodicSlice[X1:X2, Y3:Y4] = bottomLeft
+    periodicSlice[X2:X3, Y3:Y4] = bottomRight
+    periodicSlice[X3:X4, Y3:Y4] = bottomLeft
+
+    fig = go.Figure()
+    pos = np.where(periodicSlice == 0)
+    fig.add_trace(go.Scatter(x=pos[0], y=pos[1], mode='markers'))
+    fig.add_trace(go.Scatter(x=[0, X4], y=[Y1,Y1], line=dict(dash='dash')))
+    fig.add_trace(go.Scatter(x=[0,X4], y=[Y3, Y3], line=dict(dash='dash'))) 
+    fig.add_trace(go.Scatter(x=[X1, X1], y=[0, Y4], line=dict(dash='dash')))
+    fig.add_trace(go.Scatter(x=[X3, X3], y=[0, Y4], line=dict(dash='dash')))     
+    fig['layout']['yaxis']['autorange']= "reversed"
+    fig.show()
+
+    # pos = np.where(slice == 0)
+    # fig = px.scatter(x=pos[1], y=pos[0])
+    # fig['layout']['yaxis']['autorange']= "reversed"
+    # fig.show()
+
+    # originalSlice = periodicSlice[X1:X3, Y1:Y3]
+    # print('original slice shape is', originalSlice.shape, 'which should be the same as', slice.shape)
+    # pos = np.where(originalSlice == 0)
+    # fig = px.scatter(x=pos[1], y=pos[0])
+    # fig['layout']['yaxis']['autorange']= "reversed"
+    # fig.show()
+
+    return periodicSlice, X1, X3, Y1, Y3
+
 
 # UNCOMMENT TO CALCULATE CHANNEL WIDTH AT EVERY SLICE AND PLOT
 # looking at channel width at every slice
@@ -168,10 +265,10 @@ def calcFibreFrac(slice):
 # now considering slices at 300 and 500 i.e. spots where we've noticed different things
 
 stats300Data, meanU300, stdU300 = generateLocalFlowSpeeds(299)
-stats500Data, meanU500, stdU500 = generateLocalFlowSpeeds(499)
+#stats500Data, meanU500, stdU500 = generateLocalFlowSpeeds(499)
 print('property, min, max, mean, std')
 print('u_vox300', np.min(stats300Data['u_vox']), np.max(stats300Data['u_vox']), np.mean(stats300Data['u_vox']), np.std(stats300Data['u_vox']))
-print('u_vox500', np.min(stats500Data['u_vox']), np.max(stats500Data['u_vox']), np.mean(stats500Data['u_vox']), np.std(stats500Data['u_vox']))
+#print('u_vox500', np.min(stats500Data['u_vox']), np.max(stats500Data['u_vox']), np.mean(stats500Data['u_vox']), np.std(stats500Data['u_vox']))
 
 
 # UNCOMMENT FOR HISTOGRAMS OF COMPARISON BETWEEN SLICE 300 and SLICE 500
@@ -236,11 +333,17 @@ print('u_vox500', np.min(stats500Data['u_vox']), np.max(stats500Data['u_vox']), 
 # function to plot scatter and heatmap comparisons - used to plot fibres and the local flow around those fibres
 def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, colorbarTitle):
     pos = np.where(slice == 1)
+    print('slice properties,', slice.shape)
+    print('len of pos[0]', len(pos[0]))
+    print('heatmap properties', heatmapData.shape)
+
+    if(areAxesFlipped):
+        heatmapData=swapaxes(heatmapData, 0, 1)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=pos[1],
-        y=pos[0],
+        x=pos[0],
+        y=pos[1],
         mode='markers',
         marker=dict(
             size=1,
@@ -261,10 +364,11 @@ def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, col
         width=600,
         height=3000
     )
+    fig['layout']['yaxis']['autorange']= "reversed"
 
     fig.show()
 
 plotScatterHeatmapComparison(binaryOutputs[299], stats300Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
 plotScatterHeatmapComparison(binaryOutputs[299], stats300Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
-plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
-plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
+#plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
+#plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
