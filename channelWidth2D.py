@@ -8,7 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-zipFile = np.load('./ImageStackFULL.npz')
+zipFile = np.load('./outputs/npz/FinalFusedThresh30.npz')
 binaryOutputs = np.asarray(zipFile['binaryOut'], dtype='bool')
 
 print('The x axis is', binaryOutputs.shape[1], 'by', binaryOutputs.shape[2], 'on the y axis')
@@ -44,7 +44,8 @@ print('max possible distance', maxDistance, 'pixels')
 statsArray = np.zeros([6, nSlices])
 
 # pixel size in micrometres
-pixelSize = 0.28
+# CHANGE THIS
+pixelSize = 1.82
 
 # finds distance to nearest fibre and generates statistics
 def generateDistanceStats(slice, cropXStart, cropXEnd, cropYStart, cropYEnd, filterMin=True, filterMax=True):
@@ -173,15 +174,15 @@ def generatePeriodicSlice(slice):
     periodicSlice[X2:X3, Y3:Y4] = bottomRight
     periodicSlice[X3:X4, Y3:Y4] = bottomLeft
 
-    fig = go.Figure()
-    pos = np.where(periodicSlice == 0)
-    fig.add_trace(go.Scatter(x=pos[0], y=pos[1], mode='markers'))
-    fig.add_trace(go.Scatter(x=[0, X4], y=[Y1,Y1], line=dict(dash='dash')))
-    fig.add_trace(go.Scatter(x=[0,X4], y=[Y3, Y3], line=dict(dash='dash'))) 
-    fig.add_trace(go.Scatter(x=[X1, X1], y=[0, Y4], line=dict(dash='dash')))
-    fig.add_trace(go.Scatter(x=[X3, X3], y=[0, Y4], line=dict(dash='dash')))     
-    fig['layout']['yaxis']['autorange']= "reversed"
-    fig.show()
+    # fig = go.Figure()
+    # pos = np.where(periodicSlice == 0)
+    # fig.add_trace(go.Scatter(x=pos[0], y=pos[1], mode='markers'))
+    # fig.add_trace(go.Scatter(x=[0, X4], y=[Y1,Y1], line=dict(dash='dash')))
+    # fig.add_trace(go.Scatter(x=[0,X4], y=[Y3, Y3], line=dict(dash='dash'))) 
+    # fig.add_trace(go.Scatter(x=[X1, X1], y=[0, Y4], line=dict(dash='dash')))
+    # fig.add_trace(go.Scatter(x=[X3, X3], y=[0, Y4], line=dict(dash='dash')))     
+    # fig['layout']['yaxis']['autorange']= "reversed"
+    # fig.show()
 
     # pos = np.where(slice == 0)
     # fig = px.scatter(x=pos[1], y=pos[0])
@@ -264,7 +265,7 @@ def generatePeriodicSlice(slice):
 
 # now considering slices at 300 and 500 i.e. spots where we've noticed different things
 
-stats300Data, meanU300, stdU300 = generateLocalFlowSpeeds(299)
+stats300Data, meanU300, stdU300 = generateLocalFlowSpeeds(29)
 #stats500Data, meanU500, stdU500 = generateLocalFlowSpeeds(499)
 print('property, min, max, mean, std')
 print('u_vox300', np.min(stats300Data['u_vox']), np.max(stats300Data['u_vox']), np.mean(stats300Data['u_vox']), np.std(stats300Data['u_vox']))
@@ -361,14 +362,16 @@ def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, col
 
     fig.update_layout(
         autosize=False,
-        width=600,
-        height=3000
+        width=1000,
+        height=1000
     )
     fig['layout']['yaxis']['autorange']= "reversed"
+    fig.update_layout(yaxis_range=[0,756])
+    fig.update_layout(xaxis_range=[0,756])
 
     fig.show()
 
-plotScatterHeatmapComparison(binaryOutputs[299], stats300Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
-plotScatterHeatmapComparison(binaryOutputs[299], stats300Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
+plotScatterHeatmapComparison(binaryOutputs[29], stats300Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
+plotScatterHeatmapComparison(binaryOutputs[29], stats300Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
 #plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
 #plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
