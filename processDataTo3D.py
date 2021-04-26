@@ -1,5 +1,6 @@
 ## processDataTo3D
 # generates a npz file containing binary outputs, labelled outputs, original output and a blurred/Thresholded image from a 3D image tif
+# VERIFY YOUR OUTPUTS USING beforeAndAfterProcessingStats.py
 import numpy as np
 import cv2  # computer vision
 from skimage import io  # scikit-image
@@ -9,7 +10,7 @@ from scipy.ndimage import gaussian_filter
 
 # load image as pixel array
 # CHANGE THIS BEFORE RUNNING
-imageFilename = './resources/data/bigFused2.tif'
+imageFilename = './resources/data/FinalFused.tif'
 
 imageStack = io.imread(imageFilename)
 imageStack = imageStack
@@ -43,7 +44,8 @@ for imageNo in range(blur.shape[0]):
     imageSlice = blur[imageNo]
 
     # use simple binary threshold to filter out noise
-    thresholdValue = 30
+    # change this based on stats from imageNoiseStats
+    thresholdValue = 1
     N, outputVals = cv2.threshold(imageSlice, thresholdValue, 1, cv2.THRESH_BINARY)
     
     newImageStack[imageNo] = outputVals
@@ -84,5 +86,5 @@ for i in range(1, N+1):
 print("There are now ", nFibres, " components")
 
 # save image
-filename='./outputs/FinalFusedThresh30.npz'
+filename='./outputs/npz/FinalFusedThresh1.npz'
 np.savez_compressed(filename, original=imageStack, blurThresh=newImageStack, labelledOut=labelsOut, binaryOut=binaryOut)

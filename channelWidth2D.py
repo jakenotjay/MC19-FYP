@@ -8,8 +8,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-zipFile = np.load('./outputs/npz/FinalFusedThresh30.npz')
+zipFile = np.load('./outputs/npz/FinalFusedThresh2.npz')
 binaryOutputs = np.asarray(zipFile['binaryOut'], dtype='bool')
+binaryOutputs = binaryOutputs[0:, 170:650, 0:]
 
 print('The x axis is', binaryOutputs.shape[1], 'by', binaryOutputs.shape[2], 'on the y axis')
 print('if this is wrong change the variable areAxesFlipped to True')

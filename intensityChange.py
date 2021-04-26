@@ -6,7 +6,7 @@ from skimage import io
 import plotly.express as px
 
 # import image
-imageFilename = './resources/data/Fused3103.tif'
+imageFilename = './FinalFusedNormalisationPOC.tif'
 imageStack = io.imread(imageFilename)
 
 print(imageStack.shape[0], ' slices in z stack each ',
