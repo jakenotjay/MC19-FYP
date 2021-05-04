@@ -45,7 +45,7 @@ for imageNo in range(blur.shape[0]):
 
     # use simple binary threshold to filter out noise
     # change this based on stats from imageNoiseStats
-    thresholdValue = 1
+    thresholdValue = 5
     N, outputVals = cv2.threshold(imageSlice, thresholdValue, 1, cv2.THRESH_BINARY)
     
     newImageStack[imageNo] = outputVals
@@ -86,5 +86,5 @@ for i in range(1, N+1):
 print("There are now ", nFibres, " components")
 
 # save image
-filename='./outputs/npz/FinalFusedThresh1.npz'
+filename='./outputs/npz/FinalFusedThresh5.npz'
 np.savez_compressed(filename, original=imageStack, blurThresh=newImageStack, labelledOut=labelsOut, binaryOut=binaryOut)

@@ -5,7 +5,7 @@ from scipy.ndimage.measurements import label
 import tifffile
 
 # loads labelled outputs
-zipFile = np.load('./outputs/npz/FinalFusedThresh1.npz')
+zipFile = np.load('./outputs/npz/FinalFusedThresh5.npz')
 labelledOutputs = zipFile['labelledOut']
 print(labelledOutputs.shape)
 
@@ -46,4 +46,4 @@ for i in range(1, maxN+1):
         rgbOutputs[pos[0][j], pos[1][j], pos[2][j], 2] = colourList[i-1][2]
         
 # write image as a tiff file
-tifffile.imwrite('./outputs/tif/FinalFusedThresh1.tif', rgbOutputs, photometric='rgb')
+tifffile.imwrite('./outputs/tif/FinalFusedThresh5.tif', rgbOutputs, photometric='rgb')

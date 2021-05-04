@@ -6,8 +6,6 @@ from numpy.core.fromnumeric import nonzero
 import pandas as pd
 import plotly.graph_objects as go
 
-
-
 def noiseAnalysis(image):
     nSlices = image.shape[0]
     nNoiseSlice = []
@@ -197,7 +195,7 @@ def visualiseNoiseAnalysis(originalDF, outputDF):
     )
     nonZeroPixelsSliceFig.show()
 
-zipFile = np.load('./outputs/npz/FinalFusedThresh1.npz')
+zipFile = np.load('./outputs/npz/FinalFusedThresh5.npz')
 binaryOutputs = np.asarray(zipFile['binaryOut'], dtype='uint8')
 original = np.asarray(zipFile['original'], dtype='uint8')
 originalBinary = np.zeros(shape=(original.shape[0], original.shape[1], original.shape[2]), dtype='uint8')

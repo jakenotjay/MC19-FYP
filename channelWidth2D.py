@@ -8,13 +8,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-zipFile = np.load('./outputs/npz/FinalFusedThresh2.npz')
+# load  file
+zipFile = np.load('./outputs/npz/FinalFusedThresh5.npz')
 binaryOutputs = np.asarray(zipFile['binaryOut'], dtype='bool')
-binaryOutputs = binaryOutputs[0:, 170:650, 0:]
+# binaryOutputs = binaryOutputs[0:, 170:650, 0:]
 
 print('The x axis is', binaryOutputs.shape[1], 'by', binaryOutputs.shape[2], 'on the y axis')
 print('if this is wrong change the variable areAxesFlipped to True')
 
+# if the xy axes flipped (often loading the tif they are) then we can flip them back the right way round
 areAxesFlipped = True
 if(areAxesFlipped):
     binaryOutputs = np.swapaxes(binaryOutputs, 1, 2)
@@ -23,7 +25,6 @@ if(areAxesFlipped):
 # inverse image i.e 1 to 0, 0 to 1
 inverseImage = np.array(np.invert(binaryOutputs), dtype='uint8')
 print('inverse image has shape', inverseImage.shape[0], inverseImage.shape[1], inverseImage.shape[2])
-
 
 nSlices = inverseImage.shape[0]
 
@@ -113,6 +114,9 @@ def calcAvgVelocityInLayer(avgSpeed, fracFibre):
 
 # calculates fibre fraction - fraction of image made up of fibre pixels
 def calcFibreFrac(slice):
+    print('slice shape is ', slice.shape)
+    slice = slice[0:, 170:650]
+    print('slice shape is for fibe frac', slice.shape)
     flatSlice = slice.flatten()
     pts = np.where(slice == 0)  
     nFibrePixels = len(pts[0])
@@ -266,24 +270,24 @@ def generatePeriodicSlice(slice):
 
 # now considering slices at 300 and 500 i.e. spots where we've noticed different things
 
-stats300Data, meanU300, stdU300 = generateLocalFlowSpeeds(29)
-#stats500Data, meanU500, stdU500 = generateLocalFlowSpeeds(499)
+statsSlice1Data, meanUSlice1, stdUSlice1 = generateLocalFlowSpeeds(19)
+#statsSlice2Data, meanU500, stdU500 = generateLocalFlowSpeeds(499)
 print('property, min, max, mean, std')
-print('u_vox300', np.min(stats300Data['u_vox']), np.max(stats300Data['u_vox']), np.mean(stats300Data['u_vox']), np.std(stats300Data['u_vox']))
-#print('u_vox500', np.min(stats500Data['u_vox']), np.max(stats500Data['u_vox']), np.mean(stats500Data['u_vox']), np.std(stats500Data['u_vox']))
+print('u_vox300', np.min(statsSlice1Data['u_vox']), np.max(statsSlice1Data['u_vox']), np.mean(statsSlice1Data['u_vox']), np.std(statsSlice1Data['u_vox']))
+#print('u_vox500', np.min(statsSlice2Data['u_vox']), np.max(statsSlice2Data['u_vox']), np.mean(statsSlice2Data['u_vox']), np.std(statsSlice2Data['u_vox']))
 
 
 # UNCOMMENT FOR HISTOGRAMS OF COMPARISON BETWEEN SLICE 300 and SLICE 500
 # figSliceComparison = go.Figure()
 # figSliceComparison.add_trace(go.Histogram(
-#                     x=stats300Data['distances'],
+#                     x=statsSlice1Data['distances'],
 #                     name='Slice 300 (84um) nearest fibre distance',
 #                     opacity=0.8,
 #                     nbinsx=20
 #                 ))
 
 # figSliceComparison.add_trace(go.Histogram(
-#                     x=stats500Data['distances'],
+#                     x=statsSlice2Data['distances'],
 #                     name='Slice 500 (140um) nearest fibre distance',
 #                     opacity=0.8,
 #                     nbinsx=20
@@ -305,14 +309,14 @@ print('u_vox300', np.min(stats300Data['u_vox']), np.max(stats300Data['u_vox']), 
 
 # figSliceComparisonU = go.Figure()
 # figSliceComparisonU.add_trace(go.Histogram(
-#                     x=stats300Data['u_vox'],
+#                     x=statsSlice1Data['u_vox'],
 #                     name='Slice 300 (84um) local flow speeds (lower fibre density)',
 #                     opacity=0.8,
 #                     nbinsx=50
 #                 ))
 
 # figSliceComparisonU.add_trace(go.Histogram(
-#                     x=stats500Data['u_vox'],
+#                     x=statsSlice2Data['u_vox'],
 #                     name='Slice 500 (140um) local flow speeds (higher fibre density)',
 #                     opacity=0.8,
 #                     nbinsx=50
@@ -372,7 +376,7 @@ def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, col
 
     fig.show()
 
-plotScatterHeatmapComparison(binaryOutputs[29], stats300Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
-plotScatterHeatmapComparison(binaryOutputs[29], stats300Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
-#plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
-#plotScatterHeatmapComparison(binaryOutputs[499], stats500Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
+plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
+plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
+#plotScatterHeatmapComparison(binaryOutputs[499], statsSlice2Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
+#plotScatterHeatmapComparison(binaryOutputs[499], statsSlice2Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
