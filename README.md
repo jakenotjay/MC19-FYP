@@ -12,6 +12,7 @@ Below is a basic description of what each of these files contains.
 
 ## Packages
 Packages used in the main set of files are as follows:
+
 - numpy
 - cv2 - image manipulation
 - pandas - data manipulation
@@ -26,6 +27,7 @@ Each file within this repository contains a summary at the top of the file writt
 Development is regular, so a files outputs may change regularly.
 
 **Key files to the report are:**
+
 - processDataTo3D.py
 - channelWidth2D.py
 - findAirGaps.py
