@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # load  file
-zipFile = np.load('./outputs/npz/FinalFusedThresh5.npz')
+zipFile = np.load('./outputs/npz/final/FinalFusedThresh10Final.npz')
 binaryOutputs = np.asarray(zipFile['binaryOut'], dtype='bool')
 # binaryOutputs = binaryOutputs[0:, 170:650, 0:]
 
@@ -104,6 +104,7 @@ def generateLocalFlowSpeeds(sliceNumber):
         'distances': distances,
         'u_vox': u_vox
     }
+    print(statsData['u_vox'].shape)
 
     return statsData, meanU, stdU
 
@@ -115,7 +116,7 @@ def calcAvgVelocityInLayer(avgSpeed, fracFibre):
 # calculates fibre fraction - fraction of image made up of fibre pixels
 def calcFibreFrac(slice):
     print('slice shape is ', slice.shape)
-    slice = slice[0:, 170:650]
+    slice = slice[0:, 170:600]
     print('slice shape is for fibe frac', slice.shape)
     flatSlice = slice.flatten()
     pts = np.where(slice == 0)  
@@ -270,11 +271,17 @@ def generatePeriodicSlice(slice):
 
 # now considering slices at 300 and 500 i.e. spots where we've noticed different things
 
-statsSlice1Data, meanUSlice1, stdUSlice1 = generateLocalFlowSpeeds(19)
-#statsSlice2Data, meanU500, stdU500 = generateLocalFlowSpeeds(499)
+statsSlice1Data, meanUSlice1, stdUSlice1 = generateLocalFlowSpeeds(9)
+statsSlice1Data['u_vox'] = statsSlice1Data['u_vox'][0:, 170:600]
+statsSlice1Data['distances'] = statsSlice1Data['distances'][0:, 170:600]
+
+statsSlice2Data, meanUSlice2, stdUSlice2 = generateLocalFlowSpeeds(19)
+statsSlice2Data['u_vox'] = statsSlice2Data['u_vox'][0:, 170:600]
+statsSlice2Data['distances'] = statsSlice2Data['distances'][0:, 170:600]
+
 print('property, min, max, mean, std')
-print('u_vox300', np.min(statsSlice1Data['u_vox']), np.max(statsSlice1Data['u_vox']), np.mean(statsSlice1Data['u_vox']), np.std(statsSlice1Data['u_vox']))
-#print('u_vox500', np.min(statsSlice2Data['u_vox']), np.max(statsSlice2Data['u_vox']), np.mean(statsSlice2Data['u_vox']), np.std(statsSlice2Data['u_vox']))
+print('u_vox10', np.min(statsSlice1Data['u_vox']), np.max(statsSlice1Data['u_vox']), np.mean(statsSlice1Data['u_vox']), np.std(statsSlice1Data['u_vox']))
+print('u_vox20', np.min(statsSlice2Data['u_vox']), np.max(statsSlice2Data['u_vox']), np.mean(statsSlice2Data['u_vox']), np.std(statsSlice2Data['u_vox']))
 
 
 # UNCOMMENT FOR HISTOGRAMS OF COMPARISON BETWEEN SLICE 300 and SLICE 500
@@ -366,17 +373,94 @@ def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, col
     ))
 
     fig.update_layout(
+        # title=heatmapName,
         autosize=False,
-        width=1000,
-        height=1000
+        # width=780,
+        height=500
     )
     fig['layout']['yaxis']['autorange']= "reversed"
-    fig.update_layout(yaxis_range=[0,756])
-    fig.update_layout(xaxis_range=[0,756])
+    fig.update_xaxes(range=[0, 756], title_text="X (pixels)")
+    fig.update_yaxes(range=[0, 430], title_text="Y (pixels)")
 
     fig.show()
 
-plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
-plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
+def plotVelocityHistogram(filteredFlatVox):
+    velocityHistogramFig = go.Figure(data=[go.Histogram(
+        x=filteredFlatVox, 
+        nbinsx=20,
+        name='u_vox histogram of speeds'
+    )])
+    velocityHistogramFig.update_yaxes(title_text="Count")
+    velocityHistogramFig.update_xaxes(title_text="Local Flow speed (m/s)", rangemode="nonnegative")
+    velocityHistogramFig.update_layout(
+        # title='Histogram of local flow speeds, 20 bins',
+        height=500,
+        # width=500,
+        font=dict(
+                size=16
+        )
+    )
+    velocityHistogramFig.show()
+
+def calculateVoxStats(sliceData, sliceNumber):
+    flatVox = sliceData['u_vox'].flatten()
+    filteredFlatVox = flatVox[flatVox > 0]
+    print('length of filtered flat vox', len(filteredFlatVox))
+
+    plotVelocityHistogram(filteredFlatVox)
+
+    # sort flow speeds
+    sortedFlatVox = np.sort(flatVox)
+    sortedFilteredFlatVox = np.sort(filteredFlatVox)
+    # find top 10% of values
+    length = len(sortedFlatVox)
+    lengthFiltered = len(sortedFilteredFlatVox)
+    topFlatVox = sortedFlatVox[int(np.floor(0.8 * length)):]
+    topFilteredVox = sortedFilteredFlatVox[int(np.floor(0.8*lengthFiltered)):]
+    # how much flux do they account for?
+    voxSum = np.sum(sortedFlatVox)
+    filteredVoxSum = np.sum(sortedFilteredFlatVox)
+    topSum = np.sum(topFlatVox)
+    topFilteredSum = np.sum(topFilteredVox)
+
+    fluxPerc = np.abs(((topSum)/voxSum)) * 100
+    filteredFluxPerc = np.abs(((topFilteredSum)/filteredVoxSum)) * 100
+
+    threshold = np.min(topFilteredVox)
+    print('shape before filtering', sliceData['u_vox'].shape)
+    maxFluxVox = (sliceData['u_vox'] > threshold) * sliceData['u_vox']
+    print('shape after filtering', maxFluxVox.shape)
+    # plotScatterHeatmapComparison(binaryOutputs[sliceNumber][0:, 170:600], maxFluxVox, 'Fibres', 'Filtered Local flow speeds', 'Local Flow Speed (m/s)')
+
+    # heatmap / total value as frac
+    fractionalVox = sliceData['u_vox'] / voxSum
+    # plotScatterHeatmapComparison(binaryOutputs[sliceNumber][0:, 170:600], fractionalVox, 'Fibres', 'Fractional Local flow speeds', 'Local Flow Speed (m/s)')
+    plotScatterHeatmapComparison(binaryOutputs[sliceNumber][0:, 170:600], sliceData['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
+
+    print('the flux percentage of non filtered values of u_vox is', fluxPerc, '%')
+    print('the flux percentage of  filtered values of u_vox is', filteredFluxPerc, '%')
+
+print('-------------------------------------------------------')
+print('-----------Calculate Voxel stats for slice 1-----------')
+print('-------------------------------------------------------')
+calculateVoxStats(statsSlice1Data, 9)
+print('-------------------------------------------------------')
+print('-----------End of Voxel stats for slice 1--------------')
+print('-------------------------------------------------------')
+
+
+print('-------------------------------------------------------')
+print('-----------Calculate Voxel stats for slice 2-----------')
+print('-------------------------------------------------------')
+calculateVoxStats(statsSlice2Data, 19)
+print('-------------------------------------------------------')
+print('-----------End of Voxel stats for slice 2==------------')
+print('-------------------------------------------------------')
+
+
+# plot normalised version? heatmapdata/np.std ?
+# link to poisueille flow
+
+# plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
 #plotScatterHeatmapComparison(binaryOutputs[499], statsSlice2Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
 #plotScatterHeatmapComparison(binaryOutputs[499], statsSlice2Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')

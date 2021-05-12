@@ -13,7 +13,12 @@ from scipy.ndimage import gaussian_filter
 imageFilename = './resources/data/FinalFused.tif'
 
 imageStack = io.imread(imageFilename)
-imageStack = imageStack
+print(imageStack.shape[0], ' slices in z stack each ',
+      imageStack.shape[1], ' by ', imageStack.shape[2], ' pixels ')
+
+imageStack = imageStack[10:54]
+
+print('removed some z-levels')
 print(imageStack.shape[0], ' slices in z stack each ',
       imageStack.shape[1], ' by ', imageStack.shape[2], ' pixels ')
 
@@ -45,7 +50,7 @@ for imageNo in range(blur.shape[0]):
 
     # use simple binary threshold to filter out noise
     # change this based on stats from imageNoiseStats
-    thresholdValue = 5
+    thresholdValue = 50
     N, outputVals = cv2.threshold(imageSlice, thresholdValue, 1, cv2.THRESH_BINARY)
     
     newImageStack[imageNo] = outputVals
@@ -86,5 +91,5 @@ for i in range(1, N+1):
 print("There are now ", nFibres, " components")
 
 # save image
-filename='./outputs/npz/FinalFusedThresh5.npz'
+filename='./outputs/npz/removedStartEndData/FinalFusedThresh50Final.npz'
 np.savez_compressed(filename, original=imageStack, blurThresh=newImageStack, labelledOut=labelsOut, binaryOut=binaryOut)
