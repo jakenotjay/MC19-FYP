@@ -7,9 +7,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
 
 # load  file
-zipFile = np.load('./outputs/npz/FinalFusedThresh5.npz')
+zipFile = np.load('./outputs/npz/final/FinalFusedThresh10Final.npz')
 binaryOutputs = np.asarray(zipFile['binaryOut'], dtype='bool')
 # binaryOutputs = binaryOutputs[0:, 170:650, 0:]
 
@@ -276,6 +277,60 @@ print('property, min, max, mean, std')
 print('u_vox300', np.min(statsSlice1Data['u_vox']), np.max(statsSlice1Data['u_vox']), np.mean(statsSlice1Data['u_vox']), np.std(statsSlice1Data['u_vox']))
 #print('u_vox500', np.min(statsSlice2Data['u_vox']), np.max(statsSlice2Data['u_vox']), np.mean(statsSlice2Data['u_vox']), np.std(statsSlice2Data['u_vox']))
 
+# quick and dirty exponential fitting analysis for Richard
+uVox = statsSlice1Data['u_vox'][0:, 170:650]
+filterArray = uVox > 0
+uVox = uVox[filterArray]
+uVoxFlat = uVox.flatten()
+
+print('min is', np.min(uVoxFlat))
+print('max is', np.max(uVoxFlat))
+
+uVoxMean = np.mean(uVoxFlat)
+n, bins, patches = plt.hist(uVoxFlat/uVoxMean, log=True)
+print('n, bins')
+print(n, bins)
+plt.xlabel('$u_z~/ ~\overline{u_z}$',fontsize=26)
+plt.ylabel('voxel count',fontsize=26)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
+plt.tight_layout()
+#plt.savefig('hist.png')
+plt.show()
+
+from scipy.optimize import curve_fit
+
+def expfit(x,height,width):
+    return height*np.exp(-x/width)
+
+def logexpfit(x,height,width):
+    return np.log(height)-x/width
+
+midpt_bins=np.zeros(len(n))
+for i in range(0,len(n)):
+    midpt_bins[i]=0.5*(bins[i]+bins[i+1])
+#
+guess_height=n[0]
+guess_width=2.0
+initial_guess_parameters=[guess_height,guess_width]
+bestfit_params,std_err_array=curve_fit(logexpfit,midpt_bins,np.log(n),p0=initial_guess_parameters)
+bestfit_height=bestfit_params[0]
+bestfit_width=bestfit_params[1]
+#
+print('best fit value of Gaussian height        ','%6.3f'%(bestfit_height),' from least squares fitting')
+print('best fit value of Gaussian width (sigma) ','%6.3f'%(bestfit_width))
+fit=expfit(midpt_bins,bestfit_height,bestfit_width)
+
+plt.xlabel('$u_z~/ ~\overline{u_z}$',fontsize=26)
+plt.ylabel('voxel count',fontsize=26)
+plt.hist((uVoxFlat/uVoxMean),log=True)
+plt.plot(midpt_bins,fit,linewidth=4)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
+plt.tight_layout()
+plt.savefig('hist.png')
+plt.show()
+
 
 # UNCOMMENT FOR HISTOGRAMS OF COMPARISON BETWEEN SLICE 300 and SLICE 500
 # figSliceComparison = go.Figure()
@@ -336,47 +391,47 @@ print('u_vox300', np.min(statsSlice1Data['u_vox']), np.max(statsSlice1Data['u_vo
 
 # figSliceComparisonU.show()
 
-# function to plot scatter and heatmap comparisons - used to plot fibres and the local flow around those fibres
-def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, colorbarTitle):
-    pos = np.where(slice == 1)
-    print('slice properties,', slice.shape)
-    print('len of pos[0]', len(pos[0]))
-    print('heatmap properties', heatmapData.shape)
+# # function to plot scatter and heatmap comparisons - used to plot fibres and the local flow around those fibres
+# def plotScatterHeatmapComparison(slice, heatmapData, sliceName, heatmapName, colorbarTitle):
+#     pos = np.where(slice == 1)
+#     print('slice properties,', slice.shape)
+#     print('len of pos[0]', len(pos[0]))
+#     print('heatmap properties', heatmapData.shape)
 
-    if(areAxesFlipped):
-        heatmapData=swapaxes(heatmapData, 0, 1)
+#     if(areAxesFlipped):
+#         heatmapData=swapaxes(heatmapData, 0, 1)
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=pos[0],
-        y=pos[1],
-        mode='markers',
-        marker=dict(
-            size=1,
-        ),
-        name=sliceName,
-    ))
+#     fig = go.Figure()
+#     fig.add_trace(go.Scatter(
+#         x=pos[0],
+#         y=pos[1],
+#         mode='markers',
+#         marker=dict(
+#             size=1,
+#         ),
+#         name=sliceName,
+#     ))
 
-    fig.add_trace(go.Heatmap(
-        z=heatmapData,
-        name=heatmapName,
-        colorbar=dict(
-            title=colorbarTitle
-        )
-    ))
+#     fig.add_trace(go.Heatmap(
+#         z=heatmapData,
+#         name=heatmapName,
+#         colorbar=dict(
+#             title=colorbarTitle
+#         )
+#     ))
 
-    fig.update_layout(
-        autosize=False,
-        width=1000,
-        height=1000
-    )
-    fig['layout']['yaxis']['autorange']= "reversed"
-    fig.update_layout(yaxis_range=[0,756])
-    fig.update_layout(xaxis_range=[0,756])
+#     fig.update_layout(
+#         autosize=False,
+#         width=1000,
+#         height=1000
+#     )
+#     fig['layout']['yaxis']['autorange']= "reversed"
+#     fig.update_layout(yaxis_range=[0,756])
+#     fig.update_layout(xaxis_range=[0,756])
 
-    fig.show()
+#     fig.show()
 
-plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
-plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
+# plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
+# plotScatterHeatmapComparison(binaryOutputs[19], statsSlice1Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')
 #plotScatterHeatmapComparison(binaryOutputs[499], statsSlice2Data['u_vox'], 'Fibres', 'Local flow speeds', 'Local Flow Speed (m/s)')
 #plotScatterHeatmapComparison(binaryOutputs[499], statsSlice2Data['distances'], 'Fibres', 'Distance to closest fibre', 'Closest fibre distance (m)')

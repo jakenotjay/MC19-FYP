@@ -24,7 +24,7 @@ def make2dPlots(dataframe):
         rows=1, cols=2
     )
 
-    fig.add_traces(
+    fig.s(
         go.Histogram(
             x=dataframe['MeanFibreDiameter'],
             name='Mean Fibre Diameter'
