@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import plotly.graph_objects as go
 import plotly.express as px
-import tifffile
+# import tifffile
 import pandas as pd
 
 def findContinuousGaps(gap):

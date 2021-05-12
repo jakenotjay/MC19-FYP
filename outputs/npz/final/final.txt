@@ -1,0 +1,1 @@
+This is data that has had the first 10 slices removed and slices 52-62 removed
