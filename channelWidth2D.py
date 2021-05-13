@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
 
 # load  file
 zipFile = np.load('./outputs/npz/final/FinalFusedThresh10Final.npz')
@@ -403,7 +404,8 @@ def plotVelocityHistogram(filteredFlatVox):
     velocityHistogramFig.show()
 
 def calculateVoxStats(sliceData, sliceNumber):
-    flatVox = sliceData['u_vox'].flatten()
+    flatVox = sliceData['u_vox'].flatten()    
+    
     filteredFlatVox = flatVox[flatVox > 0]
     print('length of filtered flat vox', len(filteredFlatVox))
 
@@ -439,6 +441,55 @@ def calculateVoxStats(sliceData, sliceNumber):
 
     print('the flux percentage of non filtered values of u_vox is', fluxPerc, '%')
     print('the flux percentage of  filtered values of u_vox is', filteredFluxPerc, '%')
+    
+    print('min is', np.min(sortedFilteredFlatVox))
+    print('max is', np.max(sortedFilteredFlatVox))
+
+    uVoxMean = np.mean(sortedFilteredFlatVox)
+    print('mean vox calculated to be', uVoxMean)
+    n, bins, patches = plt.hist(sortedFilteredFlatVox/uVoxMean, log=True)
+    print('n, bins')
+    print(n, bins)
+    plt.xlabel('$u_z~/ ~\overline{u_z}$',fontsize=26)
+    plt.ylabel('voxel count',fontsize=26)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    plt.tight_layout()
+    #plt.savefig('hist.png')
+    plt.show()
+
+    from scipy.optimize import curve_fit
+
+    def expfit(x,height,width):
+        return height*np.exp(-x/width)
+
+    def logexpfit(x,height,width):
+        return np.log(height)-x/width
+
+    midpt_bins=np.zeros(len(n))
+    for i in range(0,len(n)):
+        midpt_bins[i]=0.5*(bins[i]+bins[i+1])
+    #
+    guess_height=n[0]
+    guess_width=2.0
+    initial_guess_parameters=[guess_height,guess_width]
+    bestfit_params,std_err_array=curve_fit(logexpfit,midpt_bins,np.log(n),p0=initial_guess_parameters)
+    bestfit_height=bestfit_params[0]
+    bestfit_width=bestfit_params[1]
+    #
+    print('best fit value of exponential height        ','%6.3f'%(bestfit_height),' from least squares fitting')
+    print('best fit value of exponential width (sigma) ','%6.3f'%(bestfit_width))
+    fit=expfit(midpt_bins,bestfit_height,bestfit_width)
+
+    plt.xlabel('$u_z~/ ~\overline{u_z}$',fontsize=26)
+    plt.ylabel('voxel count',fontsize=26)
+    plt.hist((sortedFilteredFlatVox/uVoxMean),log=True)
+    plt.plot(midpt_bins,fit,linewidth=4)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    plt.tight_layout()
+    plt.savefig('hist.png')
+    plt.show()
 
 print('-------------------------------------------------------')
 print('-----------Calculate Voxel stats for slice 1-----------')
@@ -449,13 +500,13 @@ print('-----------End of Voxel stats for slice 1--------------')
 print('-------------------------------------------------------')
 
 
-print('-------------------------------------------------------')
-print('-----------Calculate Voxel stats for slice 2-----------')
-print('-------------------------------------------------------')
-calculateVoxStats(statsSlice2Data, 19)
-print('-------------------------------------------------------')
-print('-----------End of Voxel stats for slice 2==------------')
-print('-------------------------------------------------------')
+# print('-------------------------------------------------------')
+# print('-----------Calculate Voxel stats for slice 2-----------')
+# print('-------------------------------------------------------')
+# calculateVoxStats(statsSlice2Data, 19)
+# print('-------------------------------------------------------')
+# print('-----------End of Voxel stats for slice 2==------------')
+# print('-------------------------------------------------------')
 
 
 # plot normalised version? heatmapdata/np.std ?
